@@ -16,10 +16,23 @@
   (if (not (GLFW/glfwInit))
     (throw (Exception. "Failed to initialize GLFW")))
 
-  ; Simple window hints - no complex behavior
+  ; Configure window hints for proper Linux window manager behavior
   (GLFW/glfwDefaultWindowHints)
   (GLFW/glfwWindowHint GLFW/GLFW_CONTEXT_VERSION_MAJOR 2)
   (GLFW/glfwWindowHint GLFW/GLFW_CONTEXT_VERSION_MINOR 1)
+
+  ; Set X11 WM_CLASS property for proper window manager identification
+  ; This fixes the window class being set to the full title string
+  (try
+    (GLFW/glfwWindowHintString GLFW/GLFW_X11_CLASS_NAME "Jankgame")
+    (GLFW/glfwWindowHintString GLFW/GLFW_X11_INSTANCE_NAME "jankgame")
+    (catch Exception e
+      (println "Warning: Could not set X11 class name (LWJGL might need upgrade to 3.3.3+)")))
+
+  ; Ensure the window appears as a normal tiled window, not floating
+  (GLFW/glfwWindowHint GLFW/GLFW_DECORATED GLFW/GLFW_TRUE)      ; Add title bar with close button
+  (GLFW/glfwWindowHint GLFW/GLFW_RESIZABLE GLFW/GLFW_TRUE)      ; Make window resizable
+  (GLFW/glfwWindowHint GLFW/GLFW_FLOATING GLFW/GLFW_FALSE)      ; Prevent floating behavior
 
   (let [window (GLFW/glfwCreateWindow width height title 0 0)]
     (if (= window 0)
