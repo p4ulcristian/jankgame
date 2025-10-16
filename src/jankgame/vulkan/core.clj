@@ -30,7 +30,7 @@
       (println "Warning: Could not set X11 class name (LWJGL might need upgrade to 3.3.3+)")))
 
   ; Ensure the window appears as a normal tiled window, not floating
-  (GLFW/glfwWindowHint GLFW/GLFW_DECORATED GLFW/GLFW_FALSE)     ; No decorations
+  (GLFW/glfwWindowHint GLFW/GLFW_DECORATED GLFW/GLFW_TRUE)      ; Enable decorations (title bar, close button)
   (GLFW/glfwWindowHint GLFW/GLFW_RESIZABLE GLFW/GLFW_TRUE)      ; Make window resizable
   (GLFW/glfwWindowHint GLFW/GLFW_FLOATING GLFW/GLFW_FALSE)      ; Prevent floating behavior
 
@@ -42,16 +42,20 @@
     (GLFW/glfwSetKeyCallback window
       (proxy [GLFWKeyCallback] []
         (invoke [window-handle key scancode action mods]
+          (println (format "Key event: key=%d action=%d mods=%d" key action mods))
+
           ; Close window on Ctrl+W (Linux/Windows) or Cmd+W (Mac)
           (when (and (= key GLFW/GLFW_KEY_W)
                      (= action GLFW/GLFW_PRESS)
                      (or (not= 0 (bit-and mods GLFW/GLFW_MOD_CONTROL))
                          (not= 0 (bit-and mods GLFW/GLFW_MOD_SUPER))))
+            (println "Closing window via Ctrl+W")
             (GLFW/glfwSetWindowShouldClose window-handle true))
 
           ; Also close on Escape for convenience
           (when (and (= key GLFW/GLFW_KEY_ESCAPE)
                      (= action GLFW/GLFW_PRESS))
+            (println "Closing window via Escape")
             (GLFW/glfwSetWindowShouldClose window-handle true)))))
 
     (GLFW/glfwMakeContextCurrent window)
@@ -68,7 +72,7 @@
 
 (defn window-should-close? [window]
   "Check if window should close"
-  (= (GLFW/glfwWindowShouldClose window) GLFW/GLFW_TRUE))
+  (GLFW/glfwWindowShouldClose window))
 
 (defn initialize-opengl [window]
   "Initialize OpenGL"
