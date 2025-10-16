@@ -43,20 +43,28 @@
   "Check if window should close"
   (= (GLFW/glfwWindowShouldClose window) GLFW/GLFW_TRUE))
 
-(defn initialize-opengl []
+(defn initialize-opengl [window]
   "Initialize OpenGL"
   (try
     (GL/createCapabilities)
-    (GL11/glViewport 0 0 1280 720)
+    ; Get actual framebuffer size
+    (let [width (int-array 1)
+          height (int-array 1)]
+      (GLFW/glfwGetFramebufferSize window width height)
+      (let [w (aget width 0)
+            h (aget height 0)]
+        (println (format "Framebuffer size: %dx%d" w h))
+        (GL11/glViewport 0 0 w h)))
     (GL11/glClearColor 0.1 0.1 0.15 1.0)
     (GL11/glEnable GL11/GL_DEPTH_TEST)
+    (GL11/glEnable GL11/GL_NORMALIZE)
     (println "OpenGL initialized")
     (catch Exception e
       (println (format "OpenGL error: %s" (.getMessage e))))))
 
 (defn initialize-vulkan [window]
   "Initialize rendering for the given window"
-  (initialize-opengl))
+  (initialize-opengl window))
 
 (defn render-scene [rotation]
   "Render the scene with the ball"
@@ -65,8 +73,16 @@
   ; Set up a simple perspective
   (GL11/glMatrixMode GL11/GL_PROJECTION)
   (GL11/glLoadIdentity)
-  (let [aspect (/ 1280.0 720.0)]
-    (GL11/glFrustum -0.5 0.5 (/ -0.5 aspect) (/ 0.5 aspect) 1.0 100.0))
+  (let [aspect (/ 1280.0 720.0)
+        fov-y 45.0
+        near 1.0
+        far 100.0
+        f (/ 1.0 (Math/tan (/ (* fov-y Math/PI) 360.0)))
+        top (* near (/ 1.0 f))
+        bottom (- top)
+        right (* top aspect)
+        left (- right)]
+    (GL11/glFrustum left right bottom top near far))
 
   (GL11/glMatrixMode GL11/GL_MODELVIEW)
   (GL11/glLoadIdentity)
@@ -82,30 +98,29 @@
         light-ambient (float-array [0.2 0.2 0.2 1.0])
         light-diffuse (float-array [1.0 0.9 0.8 1.0])
         light-specular (float-array [1.0 1.0 1.0 1.0])]
-    (GL11/glLight GL11/GL_LIGHT0 GL11/GL_POSITION light-pos)
-    (GL11/glLight GL11/GL_LIGHT0 GL11/GL_AMBIENT light-ambient)
-    (GL11/glLight GL11/GL_LIGHT0 GL11/GL_DIFFUSE light-diffuse)
-    (GL11/glLight GL11/GL_LIGHT0 GL11/GL_SPECULAR light-specular))
+    (GL11/glLightfv GL11/GL_LIGHT0 GL11/GL_POSITION light-pos)
+    (GL11/glLightfv GL11/GL_LIGHT0 GL11/GL_AMBIENT light-ambient)
+    (GL11/glLightfv GL11/GL_LIGHT0 GL11/GL_DIFFUSE light-diffuse)
+    (GL11/glLightfv GL11/GL_LIGHT0 GL11/GL_SPECULAR light-specular))
 
   ; Material properties for the sphere
   (let [mat-ambient (float-array [0.8 0.3 0.3 1.0])
         mat-diffuse (float-array [0.8 0.3 0.3 1.0])
-        mat-specular (float-array [1.0 1.0 1.0 1.0])
-        mat-shininess (float-array [50.0])]
-    (GL11/glMaterial GL11/GL_FRONT GL11/GL_AMBIENT mat-ambient)
-    (GL11/glMaterial GL11/GL_FRONT GL11/GL_DIFFUSE mat-diffuse)
-    (GL11/glMaterial GL11/GL_FRONT GL11/GL_SPECULAR mat-specular)
-    (GL11/glMaterial GL11/GL_FRONT GL11/GL_SHININESS mat-shininess))
+        mat-specular (float-array [1.0 1.0 1.0 1.0])]
+    (GL11/glMaterialfv GL11/GL_FRONT GL11/GL_AMBIENT mat-ambient)
+    (GL11/glMaterialfv GL11/GL_FRONT GL11/GL_DIFFUSE mat-diffuse)
+    (GL11/glMaterialfv GL11/GL_FRONT GL11/GL_SPECULAR mat-specular)
+    (GL11/glMaterialf GL11/GL_FRONT GL11/GL_SHININESS 50.0))
 
   ; Draw a proper 3D sphere using quadric strips
   (let [radius 1.0
         stacks 32
         slices 32]
     (doseq [i (range stacks)]
-      (let [lat0 (/ (* Math/PI (- (* i 0.5) (/ stacks 2.0))) stacks)
+      (let [lat0 (+ (/ Math/PI -2.0) (* i (/ Math/PI stacks)))
             z0 (* radius (Math/sin lat0))
             r0 (* radius (Math/cos lat0))
-            lat1 (/ (* Math/PI (- (* (+ i 1) 0.5) (/ stacks 2.0))) stacks)
+            lat1 (+ (/ Math/PI -2.0) (* (+ i 1) (/ Math/PI stacks)))
             z1 (* radius (Math/sin lat1))
             r1 (* radius (Math/cos lat1))]
         (GL11/glBegin GL11/GL_QUAD_STRIP)
