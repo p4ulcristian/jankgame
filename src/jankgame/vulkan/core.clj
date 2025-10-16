@@ -16,10 +16,12 @@
   (if (not (GLFW/glfwInit))
     (throw (Exception. "Failed to initialize GLFW")))
 
-  (GLFW/glfwWindowHint GLFW/GLFW_CONTEXT_VERSION_MAJOR 3)
-  (GLFW/glfwWindowHint GLFW/GLFW_CONTEXT_VERSION_MAJOR 3)
+  (GLFW/glfwWindowHint GLFW/GLFW_CONTEXT_VERSION_MAJOR 2)
+  (GLFW/glfwWindowHint GLFW/GLFW_CONTEXT_VERSION_MINOR 1)
   (GLFW/glfwWindowHint GLFW/GLFW_RESIZABLE GLFW/GLFW_FALSE)
   (GLFW/glfwWindowHint GLFW/GLFW_VISIBLE GLFW/GLFW_TRUE)
+  (GLFW/glfwWindowHint GLFW/GLFW_FLOATING GLFW/GLFW_FALSE)
+  (GLFW/glfwWindowHint GLFW/GLFW_DECORATED GLFW/GLFW_TRUE)
 
   (let [window (GLFW/glfwCreateWindow width height title 0 0)]
     (if (= window 0)
@@ -86,7 +88,7 @@
 
   (GL11/glMatrixMode GL11/GL_MODELVIEW)
   (GL11/glLoadIdentity)
-  (GL11/glTranslatef 0.0 0.0 -5.0)
+  (GL11/glTranslatef 0.0 0.5 -5.0)
   (GL11/glRotatef (* (float rotation) 57.2958) 0.0 1.0 0.0)
 
   ; Enable lighting for 3D effect
