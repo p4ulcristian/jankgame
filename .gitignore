@@ -1,0 +1,31 @@
+# Clojure
+target/
+.cpcache/
+*.jar
+classes/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+.clj-kondo/
+.lsp/
+.portal/
+.nrepl-port
+
+# OS
+.DS_Store
+*.swp
+*.swo
+*~
+
+# Leiningen
+pom.xml
+pom.xml.asc
+
+# Dependencies
+lib/
+native/
