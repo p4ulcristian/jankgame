@@ -1,6 +1,6 @@
 (ns jankgame.vulkan.core
   (:import [org.lwjgl.opengl GL GL11]
-           [org.lwjgl.glfw GLFW]
+           [org.lwjgl.glfw GLFW GLFWKeyCallback]
            [org.lwjgl.system MemoryStack]
            [java.nio IntBuffer]))
 
@@ -30,13 +30,29 @@
       (println "Warning: Could not set X11 class name (LWJGL might need upgrade to 3.3.3+)")))
 
   ; Ensure the window appears as a normal tiled window, not floating
-  (GLFW/glfwWindowHint GLFW/GLFW_DECORATED GLFW/GLFW_TRUE)      ; Add title bar with close button
+  (GLFW/glfwWindowHint GLFW/GLFW_DECORATED GLFW/GLFW_FALSE)     ; No decorations
   (GLFW/glfwWindowHint GLFW/GLFW_RESIZABLE GLFW/GLFW_TRUE)      ; Make window resizable
   (GLFW/glfwWindowHint GLFW/GLFW_FLOATING GLFW/GLFW_FALSE)      ; Prevent floating behavior
 
   (let [window (GLFW/glfwCreateWindow width height title 0 0)]
     (if (= window 0)
       (throw (Exception. "Failed to create GLFW window")))
+
+    ; Set up key callback to handle Ctrl+W (or Cmd+W on Mac) for closing
+    (GLFW/glfwSetKeyCallback window
+      (proxy [GLFWKeyCallback] []
+        (invoke [window-handle key scancode action mods]
+          ; Close window on Ctrl+W (Linux/Windows) or Cmd+W (Mac)
+          (when (and (= key GLFW/GLFW_KEY_W)
+                     (= action GLFW/GLFW_PRESS)
+                     (or (not= 0 (bit-and mods GLFW/GLFW_MOD_CONTROL))
+                         (not= 0 (bit-and mods GLFW/GLFW_MOD_SUPER))))
+            (GLFW/glfwSetWindowShouldClose window-handle true))
+
+          ; Also close on Escape for convenience
+          (when (and (= key GLFW/GLFW_KEY_ESCAPE)
+                     (= action GLFW/GLFW_PRESS))
+            (GLFW/glfwSetWindowShouldClose window-handle true)))))
 
     (GLFW/glfwMakeContextCurrent window)
     window))
